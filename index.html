@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIマーケティングエージェント MVP</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            animation: fadeIn 1s ease-out;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 20px;
+            animation: slideUp 0.8s ease-out;
+        }
+        
+        .sidebar {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            height: fit-content;
+        }
+        
+        .sidebar h3 {
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 1.1em;
+        }
+        
+        .agent-list {
+            list-style: none;
+        }
+        
+        .agent-item {
+            padding: 12px;
+            margin: 8px 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95em;
+        }
+        
+        .agent-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .agent-item.active {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        .chat-container {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        
+        .chat-header {
+            padding: 15px;
+            border-bottom: 2px solid #f0f0f0;
+            margin-bottom: 20px;
+        }
+        
+        .chat-header h2 {
+            color: #333;
+            font-size: 1.5em;
+            margin-bottom: 5px;
+        }
+        
+        .chat-header p {
+            color: #666;
+            font-size: 0.95em;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .message {
+            max-width: 70%;
+            padding: 15px;
+            border-radius: 15px;
+            animation: messageSlide 0.3s ease-out;
+            line-height: 1.6;
+        }
+        
+        .message.user {
+            align-self: flex-end;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .message.ai {
+            align-self: flex-start;
+            background: #f5f5f5;
+            color: #333;
+        }
+        
+        .input-area {
+            padding: 20px;
+            border-top: 2px solid #f0f0f0;
+        }
+        
+        .quick-select {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .quick-btn {
+            padding: 8px 15px;
+            background: white;
+            border: 2px solid #667eea;
+            color: #667eea;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+        
+        .quick-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .input-field {
+            flex: 1;
+            padding: 12px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 16px;
+            transition: border 0.3s ease;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .send-btn {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .send-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .result-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 10px;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .result-title {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        
+        .result-content {
+            line-height: 1.8;
+            color: #555;
+        }
+        
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 15px;
+            width: fit-content;
+        }
+        
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: #667eea;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+        
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-10px);
+            }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from { 
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes messageSlide {
+            from { 
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        /* モバイル対応 */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                display: flex;
+                overflow-x: auto;
+                padding: 10px;
+            }
+            
+            .agent-list {
+                display: flex;
+                gap: 10px;
+            }
+            
+            .agent-item {
+                white-space: nowrap;
+                min-width: fit-content;
+            }
+            
+            .message {
+                max-width: 85%;
+            }
+            
+            .quick-select {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                padding-bottom: 5px;
+            }
+            
+            .quick-btn {
+                flex-shrink: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 AIマーケティングエージェント</h1>
+            <p>プロンプト不要で最適な広告コンテンツを自動生成</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="sidebar">
+                <h3>AIエージェント</h3>
+                <ul class="agent-list">
+                    <li class="agent-item active" data-agent="copy">広告コピー作成</li>
+                    <li class="agent-item" data-agent="banner">バナー構成提案</li>
+                    <li class="agent-item" data-agent="lp">LP構成作成</li>
+                    <li class="agent-item" data-agent="check">表現チェック</li>
+                    <li class="agent-item" data-agent="analysis">ABテスト分析</li>
+                </ul>
+            </div>
+            
+            <div class="chat-container">
+                <div class="chat-header">
+                    <h2 id="agent-title">広告コピー作成エージェント</h2>
+                    <p>商材とターゲットを選択するだけで、最適な広告コピーを提案します</p>
+                </div>
+                
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message ai">
+                        こんにちは！広告コピー作成エージェントです。<br>
+                        まず、商材カテゴリを選択してください。
+                    </div>
+                </div>
+                
+                <div class="input-area">
+                    <div class="quick-select" id="quickSelect">
+                        <button class="quick-btn" onclick="app.selectOption('化粧品')">化粧品</button>
+                        <button class="quick-btn" onclick="app.selectOption('健康食品')">健康食品</button>
+                        <button class="quick-btn" onclick="app.selectOption('BtoBサービス')">BtoBサービス</button>
+                        <button class="quick-btn" onclick="app.selectOption('教育')">教育</button>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" class="input-field" id="userInput" placeholder="選択するか、詳細を入力してください...">
+                        <button class="send-btn" id="sendBtn" onclick="app.sendMessage()">送信</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // AIマーケティングエージェントアプリケーション
+        class AgentApp {
+            constructor() {
+                this.agents = {
+                    copy: {
+                        title: '広告コピー作成エージェント',
+                        description: '商材とターゲットを選択するだけで、最適な広告コピーを提案します',
+                        initialMessage: 'こんにちは！広告コピー作成エージェントです。<br>まず、商材カテゴリを選択してください。',
+                        options: ['化粧品', '健康食品', 'BtoBサービス', '教育'],
+                        workflow: ['category', 'target', 'appeal', 'result']
+                    },
+                    banner: {
+                        title: 'バナー構成提案エージェント',
+                        description: 'ターゲットと訴求軸から最適なバナー構成を提案します',
+                        initialMessage: 'バナー構成提案エージェントです。<br>どのような商材のバナーを作成しますか？',
+                        options: ['EC商品', 'サービス紹介', 'キャンペーン', 'ブランディング'],
+                        workflow: ['type', 'size', 'result']
+                    },
+                    lp: {
+                        title: 'LP構成作成エージェント',
+                        description: 'コンバージョンを最大化するLP構成を自動生成します',
+                        initialMessage: 'LP構成作成エージェントです。<br>LPの目的を教えてください。',
+                        options: ['商品購入', '資料請求', '会員登録', 'お問い合わせ'],
+                        workflow: ['purpose', 'result']
+                    },
+                    check: {
+                        title: '表現チェックエージェント',
+                        description: '広告表現の適切性と効果を自動チェックします',
+                        initialMessage: '表現チェックエージェントです。<br>チェックしたいコンテンツの種類を選択してください。',
+                        options: ['広告コピー', 'バナーテキスト', 'LP見出し', 'メール文面'],
+                        workflow: ['type', 'input', 'result']
+                    },
+                    analysis: {
+                        title: 'ABテスト分析エージェント',
+                        description: 'ABテストの結果を分析し、改善提案を行います',
+                        initialMessage: 'ABテスト分析エージェントです。<br>分析したいテストの種類を選択してください。',
+                        options: ['CTR比較', 'CVR比較', 'バナー比較', 'LP比較'],
+                        workflow: ['type', 'result']
+                    }
+                };
+                
+                this.currentAgent = 'copy';
+                this.conversationStep = 0;
+                this.userSelections = {};
+                this.isProcessing = false;
+                
+                this.init();
+            }
+            
+            init() {
+                // エージェント切り替えイベント
+                document.querySelectorAll('.agent-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        if (!this.isProcessing) {
+                            this.switchAgent(item.dataset.agent);
+                            document.querySelectorAll('.agent-item').forEach(i => i.classList.remove('active'));
+                            item.classList.add('active');
+                        }
+                    });
+                });
+                
+                // Enterキーで送信
+                document.getElementById('userInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !this.isProcessing) {
+                        this.sendMessage();
+                    }
+                });
+            }
+            
+            switchAgent(agentType) {
+                const agent = this.agents[agentType];
+                this.currentAgent = agentType;
+                document.getElementById('agent-title').textContent = agent.title;
+                document.querySelector('.chat-header p').textContent = agent.description;
+                
+                // チャットをリセット
+                const chatMessages = document.getElementById('chatMessages');
+                chatMessages.innerHTML = `<div class="message ai">${agent.initialMessage}</div>`;
+                
+                // クイック選択を更新
+                this.updateQuickSelect(agent.options);
+                
+                // 状態をリセット
+                this.conversationStep = 0;
+                this.userSelections = {};
+            }
+            
+            updateQuickSelect(options) {
+                const quickSelect = document.getElementById('quickSelect');
+                quickSelect.innerHTML = options.map(option => 
+                    `<button class="quick-btn" onclick="app.selectOption('${option}')">${option}</button>`
+                ).join('');
+            }
+            
+            selectOption(option) {
+                document.getElementById('userInput').value = option;
+                this.sendMessage();
+            }
+            
+            async sendMessage() {
+                const input = document.getElementById('userInput');
+                const message = input.value.trim();
+                
+                if (!message || this.isProcessing) return;
+                
+                this.isProcessing = true;
+                document.getElementById('sendBtn').disabled = true;
+                
+                // ユーザーメッセージを追加
+                this.addMessage(message, 'user');
+                input.value = '';
+                
+                // タイピングインジケーターを表示
+                this.showTypingIndicator();
+                
+                // 疑似的な遅延で処理をシミュレート
+                setTimeout(() => {
+                    this.removeTypingIndicator();
+                    this.processResponse(message);
+                    this.isProcessing = false;
+                    document.getElementById('sendBtn').disabled = false;
+                }, 1500);
+            }
+            
+            processResponse(userMessage) {
+                const workflow = this.agents[this.currentAgent].workflow;
+                const currentStep = workflow[this.conversationStep];
+                
+                // ユーザーの選択を保存
+                this.userSelections[currentStep] = userMessage;
+                this.conversationStep++;
+                
+                // 次のステップを処理
+                if (this.conversationStep < workflow.length) {
+                    this.handleNextStep();
+                }
+            }
+            
+            handleNextStep() {
+                const agent = this.agents[this.currentAgent];
+                const workflow = agent.workflow;
+                const nextStep = workflow[this.conversationStep];
+                
+                if (nextStep === 'result') {
+                    this.generateResults();
+                } else {
+                    this.promptNextInput(nextStep);
+                }
+            }
+            
+            promptNextInput(step) {
+                const prompts = {
+                    target: {
+                        message: `商材カテゴリ「${this.userSelections.category}」を選択しました。<br>次にターゲット層を選択してください。`,
+                        options: ['20代女性', '30代女性', '40代以上女性', '全年齢男女']
+                    },
+                    appeal: {
+                        message: `ターゲット「${this.userSelections.target}」を設定しました。<br>訴求軸を選択してください。`,
+                        options: ['効果・実感', '価格・お得感', '安心・信頼', '独自性']
+                    },
+                    size: {
+                        message: `「${this.userSelections.type}」タイプのバナーですね。<br>サイズを選択してください。`,
+                        options: ['正方形(1:1)', '横長(16:9)', '縦長(9:16)', 'カスタム']
+                    },
+                    input: {
+                        message: `「${this.userSelections.type}」の表現チェックを行います。<br>チェックしたいテキストを入力してください。`,
+                        options: ['サンプルテキストを使用']
+                    }
+                };
+                
+                const prompt = prompts[step];
+                if (prompt) {
+                    this.addMessage(prompt.message, 'ai');
+                    this.updateQuickSelect(prompt.options);
+                }
+            }
+            
+            generateResults() {
+                const resultGenerators = {
+                    copy: () => this.generateCopyResults(),
+                    banner: () => this.generateBannerResults(),
+                    lp: () => this.generateLPResults(),
+                    check: () => this.generateCheckResults(),
+                    analysis: () => this.generateAnalysisResults()
+                };
+                
+                const generator = resultGenerators[this.currentAgent];
+                if (generator) {
+                    generator();
+                }
+                
+                // リセット
+                setTimeout(() => {
+                    this.conversationStep = 0;
+                    this.userSelections = {};
+                    this.updateQuickSelect(this.agents[this.currentAgent].options);
+                    this.addMessage('他にも作成したい場合は、上記の選択肢からお選びください。', 'ai');
+                }, 2000);
+            }
+            
+            generateCopyResults() {
+                const results = `
+                    <div style="margin-bottom: 10px;">✨ 分析が完了しました！以下の広告コピーを提案します：</div>
+                    <div class="result-card">
+                        <div class="result-title">🎯 訴求力重視型</div>
+                        <div class="result-content">
+                            「${this.userSelections.target}の93%が実感！」<br>
+                            「たった2週間で違いを実感できる${this.userSelections.category}」<br>
+                            <small style="color: #999;">→ 数字と期間で具体性を演出</small>
+                        </div>
+                    </div>
+                    <div class="result-card">
+                        <div class="result-title">🔥 緊急性訴求型</div>
+                        <div class="result-content">
+                            「今だけ限定！初回70%OFF」<br>
+                            「${this.userSelections.target}に選ばれて売上No.1」<br>
+                            <small style="color: #999;">→ 限定感と実績で行動を促進</small>
+                        </div>
+                    </div>
+                    <div class="result-card">
+                        <div class="result-title">💡 共感型</div>
+                        <div class="result-content">
+                            「${this.userSelections.target}の悩み、これで解決しました」<br>
+                            「もう悩まない。新習慣を始めませんか？」<br>
+                            <small style="color: #999;">→ 共感と解決策の提示</small>
+                        </div>
+                    </div>
+                `;
+                this.addMessage(results, 'ai');
+            }
+            
+            generateBannerResults() {
+                const results = `
+                    <div style="margin-bottom: 10px;">🎨 バナー構成案を生成しました：</div>
+                    <div class="result-card">
+                        <div class="result-title">📐 レイアウト構成</div>
+                        <div class="result-content">
+                            <strong>上部30%:</strong> キャッチコピー（太字・大きめ）<br>
+                            <strong>中央40%:</strong> 商品画像またはイメージビジュアル<br>
+                            <strong>下部30%:</strong> CTA（行動喚起）ボタン<br>
+                            <small style="color: #999;">→ 視線の流れを意識した黄金比率</small>
+                        </div>
+                    </div>
+                    <div class="result-card">
+                        <div class="result-title">🎨 推奨カラースキーム</div>
+                        <div class="result-content">
+                            <strong>メインカラー:</strong> #667eea（信頼感のある青紫）<br>
+                            <strong>アクセント:</strong> #f5576c（注目を集める赤）<br>
+                            <strong>背景:</strong> グラデーションで動きを演出<br>
+                            <small style="color: #999;">→ コントラストで視認性を確保</small>
+                        </div>
+                    </div>
+                `;
+                this.addMessage(results, 'ai');
+            }
+            
+            generateLPResults() {
+                const results = `
+                    <div style="margin-bottom: 10px;">📄 「${this.userSelections.purpose}」に最適なLP構成を生成しました：</div>
+                    <div class="result-card">
+                        <div class="result-title">📋 推奨7ステップ構成</div>
+                        <div class="result-content">
+                            <strong>1. ファーストビュー:</strong> 3秒で価値を伝える<br>
+                            <strong>2. 共感パート:</strong> 「こんな悩みありませんか？」<br>
+                            <strong>3. 解決提示:</strong> 商品・サービスのベネフィット<br>
+                            <strong>4. 信頼性:</strong> お客様の声・実績数値<br>
+                            <strong>5. 詳細説明:</strong> 機能や特徴の詳細<br>
+                            <strong>6. オファー:</strong> 限定特典の提示<br>
+                            <strong>7. 最終CTA:</strong> 行動を促す明確なボタン<br>
+                            <small style="color: #999;">→ 心理的な流れに沿った構成</small>
+                        </div>
+                    </div>
+                `;
+                this.addMessage(results, 'ai');
+            }
+            
+            generateCheckResults() {
+                const results = `
+                    <div style="margin-bottom: 10px;">✅ 表現チェックが完了しました：</div>
+                    <div class="result-card">
+                        <div class="result-title">📊 チェック結果</div>
+                        <div class="result-content">
+                            <strong>✅ 良い点:</strong><br>
+                            • 具体的な数値が含まれている<br>
+                            • ターゲットが明確<br>
+                            <strong>⚠️ 改善点:</strong><br>
+                            • より感情に訴える表現を追加<br>
+                            • 行動を促すCTAを強化<br>
+                            <small style="color: #999;">→ 総合評価: 75点</small>
+                        </div>
+                    </div>
+                `;
+                this.addMessage(results, 'ai');
+            }
+            
+            generateAnalysisResults() {
+                const results = `
+                    <div style="margin-bottom: 10px;">📊 ABテスト分析結果：</div>
+                    <div class="result-card">
+                        <div class="result-title">📈 統計的有意性</div>
+                        <div class="result-content">
+                            <strong>パターンA:</strong> CTR 2.3% (基準)<br>
+                            <strong>パターンB:</strong> CTR 3.1% (+34.8%向上)<br>
+                            <strong>信頼度:</strong> 95%で有意差あり<br>
+                            <small style="color: #999;">→ パターンBの採用を推奨</small>
+                        </div>
+                    </div>
+                    <div class="result-card">
+                        <div class="result-title">💡 改善提案</div>
+                        <div class="result-content">
+                            • パターンBの「緊急性訴求」が効果的<br>
+                            • CTAボタンの色を赤に変更で+15%期待<br>
+                            • ファーストビューの文字数を20%削減推奨<br>
+                            <small style="color: #999;">→ 次回テストの方向性</small>
+                        </div>
+                    </div>
+                `;
+                this.addMessage(results, 'ai');
+            }
+            
+            addMessage(text, sender) {
+                const chatMessages = document.getElementById('chatMessages');
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${sender}`;
+                messageDiv.innerHTML = text;
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+            
+            showTypingIndicator() {
+                const chatMessages = document.getElementById('chatMessages');
+                const indicator = document.createElement('div');
+                indicator.className = 'typing-indicator';
+                indicator.id = 'typingIndicator';
+                indicator.innerHTML = `
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                `;
+                chatMessages.appendChild(indicator);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+            
+            removeTypingIndicator() {
+                const indicator = document.getElementById('typingIndicator');
+                if (indicator) {
+                    indicator.remove();
+                }
+            }
+        }
+        
+        // アプリケーションの初期化
+        const app = new AgentApp();
+    </script>
+</body>
+</html>
