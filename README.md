@@ -1,0 +1,2 @@
+# ai-marketing-agent
+AIマーケティングエージェントMVP
